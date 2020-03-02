@@ -17,6 +17,9 @@ limitations under the License.
 package testing
 
 import (
+	"os"
+	"strconv"
+
 	"github.com/google/cadvisor/events"
 	cadvisorapi "github.com/google/cadvisor/info/v1"
 	cadvisorapiv2 "github.com/google/cadvisor/info/v2"
@@ -70,10 +73,28 @@ func (c *Fake) DockerContainer(name string, req *cadvisorapi.ContainerInfoReques
 func (c *Fake) MachineInfo() (*cadvisorapi.MachineInfo, error) {
 	// Simulate a machine with 1 core and 3.75GB of memory.
 	// We set it to non-zero values to make non-zero-capacity machines in Kubemark.
+	var numCores = fakeNumCores
+	var numMem = fakeMemoryCapacity
+	var err error
+	cores := os.Getenv("CORES")
+	if cores != "" {
+		numCores, err = strconv.Atoi(cores)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	memory := os.Getenv("MEMORY")
+	if memory != "" {
+		numMem, err = strconv.Atoi(memory)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &cadvisorapi.MachineInfo{
-		NumCores:       fakeNumCores,
+		NumCores:       numCores,
 		InstanceID:     cadvisorapi.InstanceID(c.NodeName),
-		MemoryCapacity: fakeMemoryCapacity,
+		MemoryCapacity: uint64(numMem),
 	}, nil
 }
 

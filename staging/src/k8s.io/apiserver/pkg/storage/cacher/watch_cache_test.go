@@ -335,6 +335,26 @@ func TestWaitUntilFreshAndList(t *testing.T) {
 	}
 }
 
+func TestWaitUntilFreshAndIndex(t *testing.T)  {
+	store := newTestWatchCache(3)
+
+	// In background, update the store.
+	go func() {
+		store.Add(makeTestPod("foo", 2))
+		store.Add(makeTestPod("bar", 5))
+	}()
+	list, resourceVersion, err := store.WaitUntilFreshAndIndex(0, "nodeName", "some-node", nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resourceVersion != 5 {
+		t.Errorf("unexpected resourceVersion: %v, expected: 5", resourceVersion)
+	}
+	if len(list) != 2 {
+		t.Errorf("unexpected list returned: %#v", list)
+	}
+}
+
 func TestWaitUntilFreshAndGet(t *testing.T) {
 	store := newTestWatchCache(3)
 

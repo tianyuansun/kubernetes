@@ -460,7 +460,7 @@ else
 release-skip-tests quick-release: KUBE_RELEASE_RUN_TESTS = n
 release-skip-tests quick-release: KUBE_FASTBUILD = true
 release-skip-tests quick-release:
-	build/release.sh
+	build/release.sh $(WHAT)
 endif
 
 define QUICK_RELEASE_IMAGES_HELP_INFO

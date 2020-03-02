@@ -158,6 +158,7 @@ func GetHollowKubeletConfig(
 	f.RegisterNode = true
 	f.RegisterSchedulable = true
 	f.ProviderID = fmt.Sprintf("kubemark://%v", nodeName)
+	f.NodeLabels["node-type"] = "hollow-node"
 
 	// Config struct
 	c, err := options.NewKubeletConfiguration()

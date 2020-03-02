@@ -41,6 +41,7 @@ type ServerRunOptions struct {
 	MaxRequestsInFlight         int
 	MaxMutatingRequestsInFlight int
 	RequestTimeout              time.Duration
+	GoawayChance                float64
 	LivezGracePeriod            time.Duration
 	MinRequestTimeout           int
 	ShutdownDelayDuration       time.Duration
@@ -78,6 +79,7 @@ func (s *ServerRunOptions) ApplyTo(c *server.Config) error {
 	c.MaxMutatingRequestsInFlight = s.MaxMutatingRequestsInFlight
 	c.LivezGracePeriod = s.LivezGracePeriod
 	c.RequestTimeout = s.RequestTimeout
+	c.GoawayChance = s.GoawayChance
 	c.MinRequestTimeout = s.MinRequestTimeout
 	c.ShutdownDelayDuration = s.ShutdownDelayDuration
 	c.JSONPatchMaxCopyBytes = s.JSONPatchMaxCopyBytes
@@ -142,6 +144,10 @@ func (s *ServerRunOptions) Validate() []error {
 		errors = append(errors, fmt.Errorf("--request-timeout can not be negative value"))
 	}
 
+	if s.GoawayChance < 0 || s.GoawayChance > 0.02 {
+		errors = append(errors, fmt.Errorf("--goaway-chance can not be less than 0 and greater than 0.02"))
+	}
+
 	if s.MinRequestTimeout < 0 {
 		errors = append(errors, fmt.Errorf("--min-request-timeout can not be negative value"))
 	}
@@ -198,6 +204,12 @@ func (s *ServerRunOptions) AddUniversalFlags(fs *pflag.FlagSet) {
 		"An optional field indicating the duration a handler must keep a request open before timing "+
 		"it out. This is the default request timeout for requests but may be overridden by flags such as "+
 		"--min-request-timeout for specific types of requests.")
+
+	fs.Float64Var(&s.GoawayChance, "goaway-chance", s.GoawayChance, ""+
+		"To prevent HTTP/2 clients from getting stuck on a single apiserver, randomly close a connection (GOAWAY). "+
+		"The client's other in-flight requests won't be affected, and the client will reconnect, likely landing on a different apiserver after going through the load balancer again. "+
+		"This argument sets the fraction of requests that will be sent a GOAWAY. Clusters with single apiservers, or which don't use a load balancer, should NOT enable this. "+
+		"Min is 0 (off), Max is .02 (1/50 requests); .001 (1/1000) is a recommended starting point.")
 
 	fs.DurationVar(&s.LivezGracePeriod, "livez-grace-period", s.LivezGracePeriod, ""+
 		"This option represents the maximum amount of time it should take for apiserver to complete its startup sequence "+

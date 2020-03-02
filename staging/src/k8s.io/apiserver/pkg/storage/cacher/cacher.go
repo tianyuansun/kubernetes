@@ -43,6 +43,8 @@ import (
 	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/klog"
 	utiltrace "k8s.io/utils/trace"
+
+	api "k8s.io/kubernetes/pkg/apis/core"
 )
 
 /*
@@ -63,6 +65,14 @@ var (
 		[]string{"resource"},
 	)
 	emptyFunc = func() {}
+)
+
+// The key type is unexported to prevent collisions
+type key int
+
+const (
+	// namespaceKey is the context key for the request namespace.
+	namespaceKey key = iota
 )
 
 const (
@@ -99,6 +109,10 @@ type Config struct {
 	// IndexerFuncs is used for optimizing amount of watchers that
 	// needs to process an incoming event.
 	IndexerFuncs storage.IndexerFuncs
+
+	// Indexers is used to accelerate the list operation, falls back to regular list
+	// operation if no indexer found.
+	Indexers *cache.Indexers
 
 	// NewFunc is a function that creates new empty object storing a object of type Type.
 	NewFunc func() runtime.Object
@@ -370,7 +384,10 @@ func NewCacherFromConfig(config Config) (*Cacher, error) {
 	}
 
 	watchCache := newWatchCache(
-		config.CacheCapacity, config.KeyFunc, cacher.processEvent, config.GetAttrsFunc, config.Versioner)
+		config.CacheCapacity, config.KeyFunc, cacher.processEvent, config.GetAttrsFunc, config.Versioner, config.Indexers)
+	if config.ResourcePrefix == "/pods" {
+		_ = watchCache.store.AddIndexers(storeElementIndexers(&cache.Indexers{"Namespace": NamespaceIndexFunc}))
+	}
 	listerWatcher := NewCacherListerWatcher(config.Storage, config.ResourcePrefix, config.NewListFunc)
 	reflectorName := "storage/cacher.go:" + config.ResourcePrefix
 
@@ -426,6 +443,15 @@ func (c *Cacher) startCaching(stopChannel <-chan struct{}) {
 	if err := c.reflector.ListAndWatch(stopChannel); err != nil {
 		klog.Errorf("unexpected ListAndWatch error: %v", err)
 	}
+}
+
+// NodeNameIndexFunc return value spec.nodename of given object.
+func NamespaceIndexFunc(obj interface{}) ([]string, error) {
+	pod, ok := obj.(*api.Pod)
+	if !ok {
+		return nil, fmt.Errorf("not a pod")
+	}
+	return []string{pod.Namespace}, nil
 }
 
 // Versioner implements storage.Interface.
@@ -534,11 +560,11 @@ func (c *Cacher) WatchList(ctx context.Context, key string, resourceVersion stri
 
 // Get implements storage.Interface.
 func (c *Cacher) Get(ctx context.Context, key string, resourceVersion string, objPtr runtime.Object, ignoreNotFound bool) error {
-	if resourceVersion == "" {
-		// If resourceVersion is not specified, serve it from underlying
-		// storage (for backward compatibility).
-		return c.storage.Get(ctx, key, resourceVersion, objPtr, ignoreNotFound)
-	}
+	//if resourceVersion == "" {
+	// If resourceVersion is not specified, serve it from underlying
+	// storage (for backward compatibility).
+	//return c.storage.Get(ctx, key, resourceVersion, objPtr, ignoreNotFound)
+	//}
 
 	// If resourceVersion is specified, serve it from cache.
 	// It's guaranteed that the returned value is at least that
@@ -548,11 +574,11 @@ func (c *Cacher) Get(ctx context.Context, key string, resourceVersion string, ob
 		return err
 	}
 
-	if getRV == 0 && !c.ready.check() {
-		// If Cacher is not yet initialized and we don't require any specific
-		// minimal resource version, simply forward the request to storage.
-		return c.storage.Get(ctx, key, resourceVersion, objPtr, ignoreNotFound)
-	}
+	//if getRV == 0 && !c.ready.check() {
+	//	// If Cacher is not yet initialized and we don't require any specific
+	//	// minimal resource version, simply forward the request to storage.
+	//	return c.storage.Get(ctx, key, resourceVersion, objPtr, ignoreNotFound)
+	//}
 
 	// Do not create a trace - it's not for free and there are tons
 	// of Get requests. We can add it if it will be really needed.
@@ -585,18 +611,18 @@ func (c *Cacher) Get(ctx context.Context, key string, resourceVersion string, ob
 
 // GetToList implements storage.Interface.
 func (c *Cacher) GetToList(ctx context.Context, key string, resourceVersion string, pred storage.SelectionPredicate, listObj runtime.Object) error {
-	pagingEnabled := utilfeature.DefaultFeatureGate.Enabled(features.APIListChunking)
-	hasContinuation := pagingEnabled && len(pred.Continue) > 0
-	hasLimit := pagingEnabled && pred.Limit > 0 && resourceVersion != "0"
-	if resourceVersion == "" || hasContinuation || hasLimit {
-		// If resourceVersion is not specified, serve it from underlying
-		// storage (for backward compatibility). If a continuation is
-		// requested, serve it from the underlying storage as well.
-		// Limits are only sent to storage when resourceVersion is non-zero
-		// since the watch cache isn't able to perform continuations, and
-		// limits are ignored when resource version is zero
-		return c.storage.GetToList(ctx, key, resourceVersion, pred, listObj)
-	}
+	//pagingEnabled := utilfeature.DefaultFeatureGate.Enabled(features.APIListChunking)
+	//hasContinuation := pagingEnabled && len(pred.Continue) > 0
+	//hasLimit := pagingEnabled && pred.Limit > 0 && resourceVersion != "0"
+	//if resourceVersion == "" || hasContinuation || hasLimit {
+	//	// If resourceVersion is not specified, serve it from underlying
+	//	// storage (for backward compatibility). If a continuation is
+	//	// requested, serve it from the underlying storage as well.
+	//	// Limits are only sent to storage when resourceVersion is non-zero
+	//	// since the watch cache isn't able to perform continuations, and
+	//	// limits are ignored when resource version is zero
+	//	return c.storage.GetToList(ctx, key, resourceVersion, pred, listObj)
+	//}
 
 	// If resourceVersion is specified, serve it from cache.
 	// It's guaranteed that the returned value is at least that
@@ -606,11 +632,11 @@ func (c *Cacher) GetToList(ctx context.Context, key string, resourceVersion stri
 		return err
 	}
 
-	if listRV == 0 && !c.ready.check() {
-		// If Cacher is not yet initialized and we don't require any specific
-		// minimal resource version, simply forward the request to storage.
-		return c.storage.GetToList(ctx, key, resourceVersion, pred, listObj)
-	}
+	//if listRV == 0 && !c.ready.check() {
+	//	// If Cacher is not yet initialized and we don't require any specific
+	//	// minimal resource version, simply forward the request to storage.
+	//	return c.storage.GetToList(ctx, key, resourceVersion, pred, listObj)
+	//}
 
 	trace := utiltrace.New("cacher list", utiltrace.Field{"type", c.objectType.String()})
 	defer trace.LogIfLong(500 * time.Millisecond)
@@ -657,7 +683,9 @@ func (c *Cacher) List(ctx context.Context, key string, resourceVersion string, p
 	pagingEnabled := utilfeature.DefaultFeatureGate.Enabled(features.APIListChunking)
 	hasContinuation := pagingEnabled && len(pred.Continue) > 0
 	hasLimit := pagingEnabled && pred.Limit > 0 && resourceVersion != "0"
-	if resourceVersion == "" || hasContinuation || hasLimit {
+	// internalCCE is reflector of cacher, only want cacher to list from etcd storage
+	_, internalCCE := ctx.Value("CCE-Internal-Client").(string)
+	if (resourceVersion == "" || hasContinuation || hasLimit) && internalCCE {
 		// If resourceVersion is not specified, serve it from underlying
 		// storage (for backward compatibility). If a continuation is
 		// requested, serve it from the underlying storage as well.
@@ -675,11 +703,11 @@ func (c *Cacher) List(ctx context.Context, key string, resourceVersion string, p
 		return err
 	}
 
-	if listRV == 0 && !c.ready.check() {
-		// If Cacher is not yet initialized and we don't require any specific
-		// minimal resource version, simply forward the request to storage.
-		return c.storage.List(ctx, key, resourceVersion, pred, listObj)
-	}
+	//if listRV == 0 && !c.ready.check() {
+	//	// If Cacher is not yet initialized and we don't require any specific
+	//	// minimal resource version, simply forward the request to storage.
+	//	return c.storage.List(ctx, key, resourceVersion, pred, listObj)
+	//}
 
 	trace := utiltrace.New("cacher list", utiltrace.Field{"type", c.objectType.String()})
 	defer trace.LogIfLong(500 * time.Millisecond)
@@ -698,7 +726,14 @@ func (c *Cacher) List(ctx context.Context, key string, resourceVersion string, p
 	}
 	filter := filterWithAttrsFunction(key, pred)
 
-	objs, readResourceVersion, err := c.watchCache.WaitUntilFreshAndList(listRV, trace)
+	objs := make([]interface{}, 0)
+	var readResourceVersion uint64
+	ns, useNamespaceIndex := ctx.Value(namespaceKey).(string)
+	if useNamespaceIndex {
+		objs, readResourceVersion, err = c.watchCache.WaitUntilFreshAndIndex(listRV, "Namespace", ns, trace)
+	} else {
+		objs, readResourceVersion, err = c.watchCache.WaitUntilFreshAndList(listRV, pred.MatcherIndex(), trace)
+	}
 	if err != nil {
 		return err
 	}
@@ -1036,7 +1071,9 @@ func (lw *cacherListerWatcher) List(options metav1.ListOptions) (runtime.Object,
 		Continue: options.Continue,
 	}
 
-	if err := lw.storage.List(context.TODO(), lw.resourcePrefix, "", pred, list); err != nil {
+	ctx := context.WithValue(context.TODO(), "CCE-Internal-Client", "True")
+
+	if err := lw.storage.List(ctx, lw.resourcePrefix, "", pred, list); err != nil {
 		return nil, err
 	}
 	return list, nil
