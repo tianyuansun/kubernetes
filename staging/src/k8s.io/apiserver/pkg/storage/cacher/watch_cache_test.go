@@ -77,7 +77,7 @@ func newTestWatchCache(capacity int) *watchCache {
 	}
 	versioner := etcd3.APIObjectVersioner{}
 	mockHandler := func(*watchCacheEvent) {}
-	wc := newWatchCache(capacity, keyFunc, mockHandler, getAttrsFunc, versioner)
+	wc := newWatchCache(capacity, keyFunc, mockHandler, getAttrsFunc, versioner, nil)
 	wc.clock = clock.NewFakeClock(time.Now())
 	return wc
 }
@@ -323,7 +323,7 @@ func TestWaitUntilFreshAndList(t *testing.T) {
 		store.Add(makeTestPod("bar", 5))
 	}()
 
-	list, resourceVersion, err := store.WaitUntilFreshAndList(5, nil)
+	list, resourceVersion, err := store.WaitUntilFreshAndList(5, nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -398,7 +398,7 @@ func TestWaitUntilFreshAndListTimeout(t *testing.T) {
 		store.Add(makeTestPod("bar", 5))
 	}()
 
-	_, _, err := store.WaitUntilFreshAndList(5, nil)
+	_, _, err := store.WaitUntilFreshAndList(5, nil, nil)
 	if err == nil {
 		t.Fatalf("unexpected lack of timeout error")
 	}
@@ -420,7 +420,7 @@ func TestReflectorForWatchCache(t *testing.T) {
 	store := newTestWatchCache(5)
 
 	{
-		_, version, err := store.WaitUntilFreshAndList(0, nil)
+		_, version, err := store.WaitUntilFreshAndList(0, nil, nil)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -443,7 +443,7 @@ func TestReflectorForWatchCache(t *testing.T) {
 	r.ListAndWatch(wait.NeverStop)
 
 	{
-		_, version, err := store.WaitUntilFreshAndList(10, nil)
+		_, version, err := store.WaitUntilFreshAndList(10, nil, nil)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
