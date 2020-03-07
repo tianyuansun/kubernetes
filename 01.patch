@@ -1,0 +1,202 @@
+From 8d7780d63581ef2ef9659ecb3ab5a6ff135c0332 Mon Sep 17 00:00:00 2001
+From: andrewsykim <kim.andrewsy@gmail.com>
+Date: Thu, 30 Jan 2020 15:58:12 -0500
+Subject: [PATCH] update github.com/docker/libnetwork to c8a5fca4a652
+
+Signed-off-by: andrewsykim <kim.andrewsy@gmail.com>
+---
+ go.mod                                        |  4 +-
+ go.sum                                        |  7 +++-
+ .../docker/libnetwork/ipvs/constants.go       | 11 ++++++
+ .../docker/libnetwork/ipvs/netlink.go         | 39 +++++++++++++------
+ vendor/modules.txt                            |  2 +-
+ 5 files changed, 46 insertions(+), 17 deletions(-)
+
+diff --git a/go.mod b/go.mod
+index a93595b320aa2..19c42a12143e5 100644
+--- a/go.mod
++++ b/go.mod
+@@ -47,7 +47,7 @@ require (
+ 	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
+ 	github.com/docker/go-connections v0.3.0
+ 	github.com/docker/go-units v0.4.0
+-	github.com/docker/libnetwork v0.8.0-dev.2.0.20190624125649-f0e46a78ea34
++	github.com/docker/libnetwork v0.8.0-dev.2.0.20190925143933-c8a5fca4a652
+ 	github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153
+ 	github.com/emicklei/go-restful v2.9.5+incompatible
+ 	github.com/euank/go-kmsg-parser v2.0.0+incompatible // indirect
+@@ -250,7 +250,7 @@ replace (
+ 	github.com/docker/docker => github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
+ 	github.com/docker/go-connections => github.com/docker/go-connections v0.3.0
+ 	github.com/docker/go-units => github.com/docker/go-units v0.4.0
+-	github.com/docker/libnetwork => github.com/docker/libnetwork v0.8.0-dev.2.0.20190624125649-f0e46a78ea34
++	github.com/docker/libnetwork => github.com/docker/libnetwork v0.8.0-dev.2.0.20190925143933-c8a5fca4a652
+ 	github.com/docker/spdystream => github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96
+ 	github.com/dustin/go-humanize => github.com/dustin/go-humanize v1.0.0
+ 	github.com/elazarl/goproxy => github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153 // 947c36da3153 is the SHA for git tag v1.11
+diff --git a/go.sum b/go.sum
+index 98ebe83f02c20..ed97aba2b14c7 100644
+--- a/go.sum
++++ b/go.sum
+@@ -108,6 +108,7 @@ github.com/containernetworking/cni v0.7.1 h1:fE3r16wpSEyaqY4Z4oFrLMmIGfBYIKpPrHK
+ github.com/containernetworking/cni v0.7.1/go.mod h1:LGwApLUm2FpoOfxTDEeq8T9ipbpZ61X79hmU3w8FmsY=
+ github.com/coredns/corefile-migration v1.0.4 h1:GpAwsgzgLA9HOnt3+Z69xsMVLl0doNnyVfBX79d/P5A=
+ github.com/coredns/corefile-migration v1.0.4/go.mod h1:OFwBp/Wc9dJt5cAZzHWMNhK1r5L0p0jDwIBc6j8NC8E=
++github.com/coreos/etcd v3.3.10+incompatible h1:jFneRYjIvLMLhDLCzuTuU4rSJUjRplcJQ7pD7MnhC04=
+ github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
+ github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
+ github.com/coreos/go-oidc v2.1.0+incompatible h1:sdJrfw8akMnCuUlaZU3tE/uYXFgfqom8DBE9so9EBsM=
+@@ -139,8 +140,8 @@ github.com/docker/go-connections v0.3.0 h1:3lOnM9cSzgGwx8VfK/NGOW5fLQ0GjIlCkaktF
+ github.com/docker/go-connections v0.3.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
+ github.com/docker/go-units v0.4.0 h1:3uh0PgVws3nIA0Q+MwDC8yjEPf9zjRfZZWXZYDct3Tw=
+ github.com/docker/go-units v0.4.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
+-github.com/docker/libnetwork v0.8.0-dev.2.0.20190624125649-f0e46a78ea34 h1:8GFZB1KesbMy2X2zTiJyAuwCow+U1GT0ueD42p59y4k=
+-github.com/docker/libnetwork v0.8.0-dev.2.0.20190624125649-f0e46a78ea34/go.mod h1:93m0aTqz6z+g32wla4l4WxTrdtvBRmVzYRkYvasA5Z8=
++github.com/docker/libnetwork v0.8.0-dev.2.0.20190925143933-c8a5fca4a652 h1:alzR0hpQ/vaeYQAiqpCzrcbDbGMBAghmjT8nYe0To3I=
++github.com/docker/libnetwork v0.8.0-dev.2.0.20190925143933-c8a5fca4a652/go.mod h1:93m0aTqz6z+g32wla4l4WxTrdtvBRmVzYRkYvasA5Z8=
+ github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96 h1:cenwrSVm+Z7QLSV/BsnenAOcDXdX4cMv4wP0B/5QbPg=
+ github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96/go.mod h1:Qh8CwZgvJUkLughtfhJv5dyTYa91l1fOUCrgjqmcifM=
+ github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
+@@ -364,6 +365,7 @@ github.com/mindprince/gonvml v0.0.0-20190828220739-9ebdce4bb989 h1:PS1dLCGtD8bb9
+ github.com/mindprince/gonvml v0.0.0-20190828220739-9ebdce4bb989/go.mod h1:2eu9pRWp8mo84xCg6KswZ+USQHjwgRhNp06sozOdsTY=
+ github.com/mistifyio/go-zfs v2.1.1+incompatible h1:gAMO1HM9xBRONLHHYnu5iFsOJUiJdNZo6oqSENd4eW8=
+ github.com/mistifyio/go-zfs v2.1.1+incompatible/go.mod h1:8AuVvqP/mXw1px98n46wfvcGfQ4ci2FwoAjKYxuo3Z4=
++github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
+ github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
+ github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936/go.mod h1:r1VsdOzOPt1ZSrGZWFoNhsAedKnEd6r9Np1+5blZCWk=
+ github.com/mitchellh/go-wordwrap v1.0.0 h1:6GlHJ/LTGMrIJbwgdqdl2eEH8o+Exx/0m8ir9Gns0u4=
+@@ -485,6 +487,7 @@ github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhV
+ github.com/timakin/bodyclose v0.0.0-20190721030226-87058b9bfcec/go.mod h1:Qimiffbc6q9tBWlVV6x0P9sat/ao1xEkREYPPj9hphk=
+ github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8 h1:ndzgwNDnKIqyCvHTXaCqh9KlOWKvBry6nuXMJmonVsE=
+ github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
++github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 h1:3SVOIvH7Ae1KRYyQWRjXWJEA9sS/c/pjvH++55Gr648=
+ github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
+ github.com/ultraware/funlen v0.0.2/go.mod h1:Dp4UiAus7Wdb9KUZsYWZEWiRzGuM2kXM1lPbfaF6xhA=
+ github.com/urfave/cli v1.20.0 h1:fDqGv3UG/4jbVl/QkFwEdddtEDjh/5Ov6X+0B/3bPaw=
+diff --git a/vendor/github.com/docker/libnetwork/ipvs/constants.go b/vendor/github.com/docker/libnetwork/ipvs/constants.go
+index b6b7f2bb5e34d..efac4e367cf87 100644
+--- a/vendor/github.com/docker/libnetwork/ipvs/constants.go
++++ b/vendor/github.com/docker/libnetwork/ipvs/constants.go
+@@ -144,6 +144,17 @@ const (
+ 	// a statically assigned hash table by their source IP
+ 	// addresses.
+ 	SourceHashing = "sh"
++
++	// WeightedRoundRobin assigns jobs to real servers proportionally
++	// to there real servers' weight. Servers with higher weights
++	// receive new jobs first and get more jobs than servers
++	// with lower weights. Servers with equal weights get
++	// an equal distribution of new jobs
++	WeightedRoundRobin = "wrr"
++
++	// WeightedLeastConnection assigns more jobs to servers
++	// with fewer jobs and relative to the real servers' weight
++	WeightedLeastConnection = "wlc"
+ )
+ 
+ const (
+diff --git a/vendor/github.com/docker/libnetwork/ipvs/netlink.go b/vendor/github.com/docker/libnetwork/ipvs/netlink.go
+index 083909ae050a0..7673659aa86f1 100644
+--- a/vendor/github.com/docker/libnetwork/ipvs/netlink.go
++++ b/vendor/github.com/docker/libnetwork/ipvs/netlink.go
+@@ -315,6 +315,7 @@ func assembleStats(msg []byte) (SvcStats, error) {
+ func assembleService(attrs []syscall.NetlinkRouteAttr) (*Service, error) {
+ 
+ 	var s Service
++	var addressBytes []byte
+ 
+ 	for _, attr := range attrs {
+ 
+@@ -327,11 +328,7 @@ func assembleService(attrs []syscall.NetlinkRouteAttr) (*Service, error) {
+ 		case ipvsSvcAttrProtocol:
+ 			s.Protocol = native.Uint16(attr.Value)
+ 		case ipvsSvcAttrAddress:
+-			ip, err := parseIP(attr.Value, s.AddressFamily)
+-			if err != nil {
+-				return nil, err
+-			}
+-			s.Address = ip
++			addressBytes = attr.Value
+ 		case ipvsSvcAttrPort:
+ 			s.Port = binary.BigEndian.Uint16(attr.Value)
+ 		case ipvsSvcAttrFWMark:
+@@ -353,6 +350,16 @@ func assembleService(attrs []syscall.NetlinkRouteAttr) (*Service, error) {
+ 		}
+ 
+ 	}
++
++	// parse Address after parse AddressFamily incase of parseIP error
++	if addressBytes != nil {
++		ip, err := parseIP(addressBytes, s.AddressFamily)
++		if err != nil {
++			return nil, err
++		}
++		s.Address = ip
++	}
++
+ 	return &s, nil
+ }
+ 
+@@ -416,18 +423,18 @@ func (i *Handle) doCmdWithoutAttr(cmd uint8) ([][]byte, error) {
+ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error) {
+ 
+ 	var d Destination
++	var addressBytes []byte
+ 
+ 	for _, attr := range attrs {
+ 
+ 		attrType := int(attr.Attr.Type)
+ 
+ 		switch attrType {
++
++		case ipvsDestAttrAddressFamily:
++			d.AddressFamily = native.Uint16(attr.Value)
+ 		case ipvsDestAttrAddress:
+-			ip, err := parseIP(attr.Value, syscall.AF_INET)
+-			if err != nil {
+-				return nil, err
+-			}
+-			d.Address = ip
++			addressBytes = attr.Value
+ 		case ipvsDestAttrPort:
+ 			d.Port = binary.BigEndian.Uint16(attr.Value)
+ 		case ipvsDestAttrForwardingMethod:
+@@ -438,8 +445,6 @@ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error)
+ 			d.UpperThreshold = native.Uint32(attr.Value)
+ 		case ipvsDestAttrLowerThreshold:
+ 			d.LowerThreshold = native.Uint32(attr.Value)
+-		case ipvsDestAttrAddressFamily:
+-			d.AddressFamily = native.Uint16(attr.Value)
+ 		case ipvsDestAttrActiveConnections:
+ 			d.ActiveConnections = int(native.Uint16(attr.Value))
+ 		case ipvsDestAttrInactiveConnections:
+@@ -452,6 +457,16 @@ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error)
+ 			d.Stats = DstStats(stats)
+ 		}
+ 	}
++
++	// parse Address after parse AddressFamily incase of parseIP error
++	if addressBytes != nil {
++		ip, err := parseIP(addressBytes, d.AddressFamily)
++		if err != nil {
++			return nil, err
++		}
++		d.Address = ip
++	}
++
+ 	return &d, nil
+ }
+ 
+diff --git a/vendor/modules.txt b/vendor/modules.txt
+index cea227de56839..4c1109436ec0b 100644
+--- a/vendor/modules.txt
++++ b/vendor/modules.txt
+@@ -249,7 +249,7 @@ github.com/docker/go-connections/sockets
+ github.com/docker/go-connections/tlsconfig
+ # github.com/docker/go-units v0.4.0 => github.com/docker/go-units v0.4.0
+ github.com/docker/go-units
+-# github.com/docker/libnetwork v0.8.0-dev.2.0.20190624125649-f0e46a78ea34 => github.com/docker/libnetwork v0.8.0-dev.2.0.20190624125649-f0e46a78ea34
++# github.com/docker/libnetwork v0.8.0-dev.2.0.20190925143933-c8a5fca4a652 => github.com/docker/libnetwork v0.8.0-dev.2.0.20190925143933-c8a5fca4a652
+ github.com/docker/libnetwork/ipvs
+ # github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96 => github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96
+ github.com/docker/spdystream

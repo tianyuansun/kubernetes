@@ -42,7 +42,6 @@ func TestGetAPIRequestInfo(t *testing.T) {
 		expectedName        string
 		expectedParts       []string
 	}{
-
 		// resource paths
 		{"GET", "/api/v1/namespaces", "list", "api", "", "v1", "", "namespaces", "", "", []string{"namespaces"}},
 		{"GET", "/api/v1/namespaces/other", "get", "api", "", "v1", "other", "namespaces", "", "other", []string{"namespaces", "other"}},
@@ -166,6 +165,7 @@ func TestGetNonAPIRequestInfo(t *testing.T) {
 		"one step":                     {"/api", false},
 		"zero step":                    {"/", false},
 		"empty":                        {"", false},
+		"pprof":                        {"/debug/pprof/profile", false},
 	}
 
 	resolver := newTestRequestInfoResolver()
@@ -175,8 +175,9 @@ func TestGetNonAPIRequestInfo(t *testing.T) {
 
 		apiRequestInfo, err := resolver.NewRequestInfo(req)
 		if err != nil {
-			t.Errorf("%s: Unexpected error %v", testName, err)
+			t.Errorf("%s: Unexpected error %+v", testName, err)
 		}
+		t.Logf("request info is %v", apiRequestInfo)
 		if e, a := tc.expected, apiRequestInfo.IsResourceRequest; e != a {
 			t.Errorf("%s: expected %v, actual %v", testName, e, a)
 		}

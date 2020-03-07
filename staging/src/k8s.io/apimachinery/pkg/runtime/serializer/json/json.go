@@ -24,6 +24,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
+	"k8s.io/klog"
 	"sigs.k8s.io/yaml"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,8 +58,24 @@ func NewSerializerWithOptions(meta MetaFactory, creater runtime.ObjectCreater, t
 		creater: creater,
 		typer:   typer,
 		options: options,
+		identifier: identifier(options),
 	}
 }
+
+// identifier computes Identifier of Encoder based on the given options.
+func identifier(options SerializerOptions) runtime.Identifier {
+	result := map[string]string{
+		"name":   "json",
+		"yaml":   strconv.FormatBool(options.Yaml),
+		"pretty": strconv.FormatBool(options.Pretty),
+	}
+	identifier, err := json.Marshal(result)
+	if err != nil {
+		klog.Fatalf("Failed marshaling identifier for json Serializer: %v", err)
+	}
+	return runtime.Identifier(identifier)
+}
+
 
 // SerializerOptions holds the options which are used to configure a JSON/YAML serializer.
 // example:
@@ -85,6 +102,8 @@ type Serializer struct {
 	options SerializerOptions
 	creater runtime.ObjectCreater
 	typer   runtime.ObjectTyper
+
+	identifier runtime.Identifier
 }
 
 // Serializer implements Serializer
@@ -306,6 +325,13 @@ func (s *Serializer) Decode(originalData []byte, gvk *schema.GroupVersionKind, i
 
 // Encode serializes the provided object to the given writer.
 func (s *Serializer) Encode(obj runtime.Object, w io.Writer) error {
+	if co, ok := obj.(runtime.CacheableObject); ok {
+		return co.CacheEncode(s.Identifier(), s.doEncode, w)
+	}
+	return s.doEncode(obj, w)
+}
+
+func (s *Serializer) doEncode(obj runtime.Object, w io.Writer) error {
 	if s.options.Yaml {
 		json, err := caseSensitiveJsonIterator.Marshal(obj)
 		if err != nil {
@@ -329,6 +355,11 @@ func (s *Serializer) Encode(obj runtime.Object, w io.Writer) error {
 	}
 	encoder := json.NewEncoder(w)
 	return encoder.Encode(obj)
+}
+
+// Identifier implements runtime.Encoder interface.
+func (s *Serializer) Identifier() runtime.Identifier {
+	return s.identifier
 }
 
 // RecognizesData implements the RecognizingDecoder interface.

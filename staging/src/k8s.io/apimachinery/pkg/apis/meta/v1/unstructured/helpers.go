@@ -22,6 +22,8 @@ import (
 	"io"
 	"strings"
 
+	"k8s.io/klog"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -329,6 +331,8 @@ var UnstructuredJSONScheme runtime.Codec = unstructuredJSONScheme{}
 
 type unstructuredJSONScheme struct{}
 
+const unstructuredJSONSchemeIdentifier runtime.Identifier = "unstructuredJSON"
+
 func (s unstructuredJSONScheme) Decode(data []byte, _ *schema.GroupVersionKind, obj runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
 	var err error
 	if obj != nil {
@@ -349,7 +353,14 @@ func (s unstructuredJSONScheme) Decode(data []byte, _ *schema.GroupVersionKind, 
 	return obj, &gvk, nil
 }
 
-func (unstructuredJSONScheme) Encode(obj runtime.Object, w io.Writer) error {
+func (s unstructuredJSONScheme) Encode(obj runtime.Object, w io.Writer) error {
+	if co, ok := obj.(runtime.CacheableObject); ok {
+		return co.CacheEncode(s.Identifier(), s.doEncode, w)
+	}
+	return s.doEncode(obj, w)
+}
+
+func (unstructuredJSONScheme) doEncode(obj runtime.Object, w io.Writer) error {
 	switch t := obj.(type) {
 	case *Unstructured:
 		return json.NewEncoder(w).Encode(t.Object)
@@ -372,6 +383,12 @@ func (unstructuredJSONScheme) Encode(obj runtime.Object, w io.Writer) error {
 		return json.NewEncoder(w).Encode(t)
 	}
 }
+
+// Identifier implements runtime.Encoder interface.
+func (unstructuredJSONScheme) Identifier() runtime.Identifier {
+	return unstructuredJSONSchemeIdentifier
+}
+
 
 func (s unstructuredJSONScheme) decode(data []byte) (runtime.Object, error) {
 	type detector struct {
@@ -460,12 +477,28 @@ func (s unstructuredJSONScheme) decodeToList(data []byte, list *UnstructuredList
 	return nil
 }
 
-type JSONFallbackEncoder struct {
-	runtime.Encoder
+type jsonFallbackEncoder struct {
+	encoder runtime.Encoder
+	identifier runtime.Identifier
 }
 
-func (c JSONFallbackEncoder) Encode(obj runtime.Object, w io.Writer) error {
-	err := c.Encoder.Encode(obj, w)
+func NewJsonFallbackEncoder(encoder runtime.Encoder) runtime.Encoder {
+	result := map[string]string{
+		"name": "fallback",
+		"base": string(encoder.Identifier()),
+	}
+	identifier, err := gojson.Marshal(result)
+	if err != nil {
+		klog.Fatalf("Failed marshaling identifier for jsonFallbackEncoder: %v", err)
+	}
+	return &jsonFallbackEncoder{
+		encoder:    encoder,
+		identifier: runtime.Identifier(identifier),
+	}
+}
+
+func (c *jsonFallbackEncoder) Encode(obj runtime.Object, w io.Writer) error {
+	err := c.encoder.Encode(obj, w)
 	if runtime.IsNotRegisteredError(err) {
 		switch obj.(type) {
 		case *Unstructured, *UnstructuredList:
@@ -473,4 +506,9 @@ func (c JSONFallbackEncoder) Encode(obj runtime.Object, w io.Writer) error {
 		}
 	}
 	return err
+}
+
+// Identifier implements runtime.Encoder interface.
+func (c *jsonFallbackEncoder) Identifier() runtime.Identifier {
+	return c.identifier
 }
