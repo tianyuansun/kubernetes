@@ -336,8 +336,8 @@ kube::log::status "vendor: updating BUILD files"
 find vendor/ -type f \( -name BUILD -o -name BUILD.bazel -o -name WORKSPACE \) -exec rm -f {} \;
 hack/update-bazel.sh >>"${LOG_FILE}" 2>&1
 
-kube::log::status "vendor: updating LICENSES file"
-hack/update-vendor-licenses.sh >>"${LOG_FILE}" 2>&1
+#kube::log::status "vendor: updating LICENSES file"
+#hack/update-vendor-licenses.sh >>"${LOG_FILE}" 2>&1
 
 kube::log::status "vendor: creating OWNERS file"
 rm -f "Godeps/OWNERS" "vendor/OWNERS"

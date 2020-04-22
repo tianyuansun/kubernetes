@@ -44,7 +44,6 @@ import (
 	"k8s.io/klog"
 	utiltrace "k8s.io/utils/trace"
 
-	api "k8s.io/kubernetes/pkg/apis/core"
 )
 
 /*
@@ -385,9 +384,9 @@ func NewCacherFromConfig(config Config) (*Cacher, error) {
 
 	watchCache := newWatchCache(
 		config.CacheCapacity, config.KeyFunc, cacher.processEvent, config.GetAttrsFunc, config.Versioner, config.Indexers)
-	if config.ResourcePrefix == "/pods" {
-		_ = watchCache.store.AddIndexers(storeElementIndexers(&cache.Indexers{"Namespace": NamespaceIndexFunc}))
-	}
+	//if config.ResourcePrefix == "/pods" {
+	//	_ = watchCache.store.AddIndexers(storeElementIndexers(&cache.Indexers{"Namespace": NamespaceIndexFunc}))
+	//}
 	listerWatcher := NewCacherListerWatcher(config.Storage, config.ResourcePrefix, config.NewListFunc)
 	reflectorName := "storage/cacher.go:" + config.ResourcePrefix
 
@@ -446,13 +445,13 @@ func (c *Cacher) startCaching(stopChannel <-chan struct{}) {
 }
 
 // NodeNameIndexFunc return value spec.nodename of given object.
-func NamespaceIndexFunc(obj interface{}) ([]string, error) {
-	pod, ok := obj.(*api.Pod)
-	if !ok {
-		return nil, fmt.Errorf("not a pod")
-	}
-	return []string{pod.Namespace}, nil
-}
+//func NamespaceIndexFunc(obj interface{}) ([]string, error) {
+//	pod, ok := obj.(*api.Pod)
+//	if !ok {
+//		return nil, fmt.Errorf("not a pod")
+//	}
+//	return []string{pod.Namespace}, nil
+//}
 
 // Versioner implements storage.Interface.
 func (c *Cacher) Versioner() storage.Versioner {
