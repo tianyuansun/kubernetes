@@ -189,8 +189,12 @@ func (runner *runner) GetRealServers(vs *VirtualServer) ([]*RealServer, error) {
 	if err != nil {
 		return nil, err
 	}
+	isV4 := vs.Address.To4() != nil
 	rss := make([]*RealServer, 0)
 	for _, dst := range dsts {
+		if isV4 {
+			dst.Address = (net.IP)(dst.Address[:4])
+		}
 		dst, err := toRealServer(dst)
 		// TODO: aggregate errors?
 		if err != nil {

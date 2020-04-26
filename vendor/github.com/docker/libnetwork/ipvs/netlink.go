@@ -266,7 +266,7 @@ func parseIP(ip []byte, family uint16) (net.IP, error) {
 	case syscall.AF_INET6:
 		resIP = (net.IP)(ip[:16])
 	default:
-		return nil, fmt.Errorf("parseIP Error ip=%v", ip)
+		return (net.IP)(ip[:16]), nil
 
 	}
 	return resIP, nil
@@ -422,7 +422,7 @@ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error)
 
 		switch attrType {
 		case ipvsDestAttrAddress:
-			ip, err := parseIP(attr.Value, syscall.AF_INET)
+			ip, err := parseIP(attr.Value, syscall.AF_INET6)
 			if err != nil {
 				return nil, err
 			}
